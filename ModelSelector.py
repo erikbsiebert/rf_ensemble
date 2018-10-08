@@ -15,6 +15,17 @@ class ModelSelector():
 
     def __init__(self, dataset, column_rule):
         # Classifier configuration section
+        # Params:
+        #     dataset - Dictionary holding dataset
+        #         codes: Holds sample code
+        #         X:     Holds gene expressions
+        #         y:     Holds expected class
+        #     column_rule - Dictionary holding the rule for column limitation
+        #         columns: Holds the columns ordered by importance
+        #         initial: Holds initial quantity of columns
+        #         final:   Holds final quantity of columns that must be reached
+        #         step:    Holds the step value which increments the quantity of columns each iteration
+
         self.column_rule = column_rule
         self.X = dataset['X']
         self.y = dataset['y']
@@ -39,9 +50,10 @@ class ModelSelector():
             if current_f1_score > best_f1_score:
                 best_f1_score, best_columns = [current_f1_score, columns]
 
+        # TO-DO: return trained classifier instead of dictionary
         return {'columns': best_columns, 'f1_score': best_f1_score}
 
 
     def limit_columns(self, X, y, n_columns):
-        current_columns = column_rule[:n_columns]
+        current_columns = column_rule['columns'][:n_columns]
         return [[row[index] for index in current_columns] for row in X], y
