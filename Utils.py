@@ -82,7 +82,15 @@ def get_prediction_results(y, y_pred):
 
     return tissue_condition_f1, tissue_condition_cm, tissue_f1, tissue_cm
 
-def nplot_results():
+def format_cm(cm, footer):
+    cm = [['<b>%d</b>' % index] + list(row) for index, row in enumerate(cm)]
+    cm = [[value if value != 0 else '-' for value in row] for row in cm]
+    cm.append(footer)
+    cm = list(map(list, zip(*cm)))
+
+    return cm
+
+def plot_results():
     print('Creating plot from logged results...')
     # Data Setup
     x, y, rows, header = [],[],[],[]
@@ -103,13 +111,9 @@ def nplot_results():
     table_data = list(map(list, zip(*table_data)))
 
     f1_data, cm_data, f1_t_data, cm_t_data = get_prediction_results(y_exp, y_pred)
-    cm_data = [['<b>%d</b>' % index] + list(row) for index, row in enumerate(cm_data)]
-    cm_data.append(['','','','<b>F1 Score:</b>','<b>%.2f%%</b>' % f1_data,'','',''])
-    cm_data = list(map(list, zip(*cm_data)))
 
-    cm_t_data = [['<b>%d</b>' % index] + list(row) for index, row in enumerate(cm_t_data)]
-    cm_t_data.append(['','<b>F1 Score:</b>','<b>%.2f%%</b>' % f1_t_data,''])
-    cm_t_data = list(map(list, zip(*cm_t_data)))
+    cm_data = format_cm(cm_data, ['','','','<b>F1 Score:</b>','<b>%.2f%%</b>' % f1_data,'','',''])
+    cm_t_data = format_cm(cm_t_data, ['','<b>F1 Score:</b>','<b>%.2f%%</b>' % f1_t_data,''])
 
     table = go.Table(
         domain=dict(x=[0, 1.],
@@ -135,18 +139,18 @@ def nplot_results():
 
     table2 = go.Table(
         domain=dict(x=[0, .45],
-                    y=[0, .25]),
+                    y=[0, .23]),
         header=dict(
             #values=list(df.columns[1:]),
             values=[
                 '<b>Confusion</b><br><b>Matrix</b>',
+                '<b>0</b>',
                 '<b>1</b>',
                 '<b>2</b>',
                 '<b>3</b>',
                 '<b>4</b>',
                 '<b>5</b>',
-                '<b>6</b>',
-                '<b>7</b>'
+                '<b>6</b>'
             ],
             font=dict(color = 'white', size=14),
             line = dict(color = '#506784'),
@@ -168,12 +172,11 @@ def nplot_results():
         domain=dict(x=[.65, .9],
                     y=[0, .20]),
         header=dict(
-            #values=list(df.columns[1:]),
             values=[
                 '<b>Confusion</b><br><b>Matrix</b>',
+                '<b>0</b>',
                 '<b>1</b>',
-                '<b>2</b>',
-                '<b>3</b>'
+                '<b>2</b>'
             ],
             font=dict(color = 'white', size=14),
             line = dict(color = '#506784'),
@@ -252,8 +255,8 @@ def nplot_results():
     )
 
     layout2 = dict(
-        width=1850,
-        height=1500,
+        width=1825,
+        height=1600,
         autosize=False,
         title='Test Results with %s, %s classes, from %s columns to %s each %s' %
             (header[0], header[1], header[2], header[3], header[4]),
@@ -267,109 +270,6 @@ def nplot_results():
     )
 
     fig2 = dict(data=[table, table2, table3, precision_trace, mean_trace, max_trace, min_trace], layout=layout2)
-    py.plot(fig2, filename='vertical-stacked-subplot-tables')
-
-
-def plot_results():
-    print('Creating plot from logged results...')
-    # Data Setup
-    x, y, rows, header = [],[],[],[]
-    with open('logs.txt', 'r') as log_file_stream:
-        log_file_rows = csv.reader(log_file_stream, delimiter=',')
-        rows = [row for row in log_file_rows]
-
-    header, y_exp, y_pred = rows[:3]
-    del rows[:3]
-
-    for row in rows:
-        x.append('%s vs. %s' % (row[0], row[1]))
-        y.append(float(row[3])/100.0)
-
-    # Classifier Score Chart configuration
-    precision_trace = go.Bar(
-        x=x,
-        y=y,
-        name='F1 Score',
-        marker=dict(
-            color='rgba(0,150,0,.7)'
-        ),
-        xaxis='x2', yaxis='y2'
-    )
-
-    mean_trace = go.Scatter(
-        x=x,
-        y=[numpy.mean(y)] * len(x),
-        name='Mean F1 Score',
-        mode = 'lines',
-        line = dict(
-            color = 'rgb(205, 12, 24)',
-            width = 4,
-            dash = 'dash'
-        ),
-        xaxis='x2', yaxis='y2'
-    )
-
-    max_trace = go.Scatter(
-        x=x,
-        y=[max(y)] * len(x),
-        name='Max F1 Score',
-        mode = 'lines',
-        line = dict(
-            color = 'rgb(0, 0, 255)',
-            width = 4,
-            dash = 'dash'
-        ),
-        xaxis='x2', yaxis='y2'
-    )
-
-    min_trace = go.Scatter(
-        x=x,
-        y=[min(y)] * len(x),
-        name='Min F1 Score',
-        mode = 'lines',
-        line = dict(
-            color = 'rgb(0, 0, 0)',
-            width = 4,
-            dash = 'dash'
-        ),
-        xaxis='x2', yaxis='y2'
-    )
-
-    # Table data configuration
-    table_data = [['%s vs. %s' % (row[0], row[1]), row[2], row[3]] for row in rows]
-    table_data = [['Classifier', 'Columns', 'F1 Score']] + table_data
-
-    figure = ff.create_table(table_data, height_constant=100)
-    figure.create_table(table_data, height_constant=100)
-    figure.add_traces([precision_trace, mean_trace, max_trace, min_trace])
-
-    # Initialize xaxis2 and yaxis2
-    figure['layout']['xaxis2'] = {}
-    figure['layout']['yaxis2'] = {}
-
-    # Edit layout for subplots
-    figure.layout.yaxis.update({'domain': [0, .5]})
-    figure.layout.yaxis2.update({'domain': [.6, 1.]})
-
-    # The graph's yaxis MUST BE anchored to the graph's xaxis
-    figure.layout.yaxis2.update({'anchor': 'x2'})
-    figure.layout.xaxis2.update({'anchor': 'y2'})
-    figure.layout.yaxis2.update({'tickformat': '%'})
-    figure.layout.yaxis2.update({'range': [min(y)-.02, 1.0]})
-
-    # Update the margins to add a title and see graph x-labels. 
-    figure.layout.margin.update({'t':75, 'l':50})
-    figure.layout.update({
-        'title': 'Test Results with %s, %s classes, from %s columns to %s each %s' %
-            (header[0], header[1], header[2], header[3], header[4])
-        })
-
-    figure.layout.update({'height':900})
-
     filename = get_available_filename()
-    #py.plot(figure, filename=filename, auto_open=False)
-    py.plot(figure, filename=filename)    
+    py.plot(fig2, filename=filename)
     print('Results plotted in %s' % filename)
-
-
-nplot_results()
