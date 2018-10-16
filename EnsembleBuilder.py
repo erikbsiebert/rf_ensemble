@@ -7,7 +7,7 @@
 from FeatureAnalyser import FeatureAnalyser
 from itertools import combinations
 from ModelSelector import ModelSelector
-from Utils import limit_columns, log_results
+from Utils import limit_columns, log_results, plot_results
 
 def warn(*args, **kwargs):
     pass
@@ -99,26 +99,75 @@ class EnsembleBuilder():
         return result
 
 
-    def predict(self, entry, samples):
-        limited_samples = self.limit_columns(samples, entry['columns'])
-        print(entry['classifier'].predict_proba(limited_samples))
+    def predict_ovo(self, X):
+        scores = [0] * int(self.config['num_classes'])
+
+        for predictor in self.predictors:
+            limited_X, _ = limit_columns([X], predictor['columns'])
+            prediction = predictor['classifier'].predict(limited_X)[0]
+            prediction = int(predictor['class1']) if prediction == 0 else int(predictor['class2'])
+            scores[prediction] += 1
+
+        print(scores)
+
+        y = scores.index(max(scores))
+
+        return y
+
+
+    def predict_ova(self, X):
+        scores = []
+
+        for predictor in self.predictors:
+            limited_X, _ = limit_columns([X], predictor['columns'])
+            scores.append(predictor['classifier'].predict_proba(limited_X)[0][0])
+
+        print(scores)
+
+        y = scores.index(max(scores))
+
+        return y
+
+
+    def run_prediction(self):
+        y = []
+        y_pred = []
+        with open(self.config['testset_path'], 'r') as f:
+            f.readline()
+            for line in f:
+                data = line.split('\t')
+                expected_y = int(data[1])
+                y.append(expected_y)
+                X = [float(value) for value in data[2:]]
+
+                prediction = -1
+                if self.config['decomp_method'] == 'one-vs-one':
+                    prediction = self.predict_ovo(X)
+
+                elif self.config['decomp_method'] == 'one-vs-all':
+                    prediction = self.predict_ova(X)
+
+                print('Real %d -> Predicted %d' % (expected_y, prediction))
+
+                y_pred.append(prediction)
+
+        return {'y': y, 'y_pred': y_pred}
 
 
     def build(self):
         if self.config['decomp_method'] == 'one-vs-one':
-            results = self.handle_one_vs_one()
+            self.predictors = self.handle_one_vs_one()
 
         elif self.config['decomp_method'] == 'one-vs-all':
-            results = self.handle_one_vs_all()
+            self.predictors = self.handle_one_vs_all()
 
         else:
             print('Unknown decomposition method!')
             return -1
 
-        log_results(results, self.config)
-        #print(results)
+        predictions = self.run_prediction()
+        log_results(self.predictors, self.config, predictions)
+        plot_results()
 
 ensemble_builder = EnsembleBuilder()
 ensemble_builder.build()
-#data_set = ensemble_builder.build_dataset([2],[3])
-#ensemble_builder.execute_combination(data_set)

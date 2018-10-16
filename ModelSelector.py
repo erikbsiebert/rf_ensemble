@@ -51,7 +51,7 @@ class ModelSelector():
             try:
                 y_pred = cross_val_predict(self.classifier, current_X, self.y, cv=10, n_jobs=-1)
             except ValueError as e:
-                y_pred = cross_val_predict(self.classifier, current_X, self.y, cv=6, n_jobs=-1)
+                y_pred = cross_val_predict(self.classifier, current_X, self.y, cv=5, n_jobs=-1)
 
             # Get F1 Score
             current_f1_score = float(f1_score(self.y, y_pred)) * 100
