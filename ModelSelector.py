@@ -13,7 +13,7 @@ from Utils import limit_columns
 class ModelSelector():
     """Class holding methods used for experimenting"""
 
-    def __init__(self, dataset, column_rule):
+    def __init__(self, dataset, column_rule, n_estimators):
         """ Classifier configuration section
             Params:
                 dataset - Dictionary holding dataset
@@ -30,7 +30,7 @@ class ModelSelector():
         self.column_rule = column_rule
         self.X = dataset['X']
         self.y = dataset['y']
-        self.classifier = RandomForestClassifier(criterion='entropy', n_jobs=-1, random_state=1337, n_estimators=10)
+        self.classifier = RandomForestClassifier(criterion='entropy', n_jobs=-1, random_state=1337, n_estimators=n_estimators)
 
 
     def run(self):

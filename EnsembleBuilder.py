@@ -92,9 +92,9 @@ class EnsembleBuilder():
 
 
     def execute_combination(self, dataset):
-        feature_analyser = FeatureAnalyser(dataset, self.column_rule)
+        feature_analyser = FeatureAnalyser(dataset, self.column_rule, self.config['n_estimators_fa'])
         updated_column_rule = feature_analyser.analyze()
-        model_selector = ModelSelector(dataset, updated_column_rule)
+        model_selector = ModelSelector(dataset, updated_column_rule, self.config['n_estimators_ms'])
         result = model_selector.run()
         return result
 

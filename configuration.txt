@@ -4,3 +4,6 @@ initial 5
 final 20
 step 5
 dataset_path samples.tsv
+testset_path testset.tsv
+n_estimators_fa 10
+n_estimators_ms 10
